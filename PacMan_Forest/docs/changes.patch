@@ -1,0 +1,801 @@
+--- original/src/mainGame/Enemies.java
++++ updated/src/mainGame/Enemies.java
+@@ -20,8 +20,7 @@
+     ArrayList<Integer>boundries=new ArrayList<>();
+     
+     Rectangle rec1,rec2,rec3,rec4,rec5,rec6;
+-    
+-    
++
+     private String[][]map;
+     private int worldX;
+     private int worldY;
+@@ -44,26 +43,19 @@
+         boundries.add(0);
+         boundries.add(0);
+         boundries.add(0);
+-        
+-        
++
+         moves.add(7);
+         moves.add(6);
+         moves.add(-5);
+         moves.add(8);
+         moves.add(-8);
+         moves.add(-5);
+-        
+-        
+-        
+-    
+-        
++
+         //this.leftBound = leftBound;
+         this.tileSize=tileSize;
+         this.map=map;
+         this.rightBound = rightBound;
+     }
+-
+-    
+ 
+ 	//Method of enemy's moving only in X-axis.
+     public void enemyMove(int playerX,int playerY) {
+@@ -76,8 +68,7 @@
+     		int newY = positions.get(i).y;
+ 
+     		int detectionRadius=4*tileSize;
+-    		
+-    		
++
+     		boolean detected=Math.abs(enemyX-playerX)<=detectionRadius && Math.abs(enemyY-playerY)<=detectionRadius;
+     		
+     		if(detected) {
+@@ -98,68 +89,61 @@
+     			}    			
+     			
+     		}
+-    		
+-    		
+-    		
++
+     		else {
+ 
+-        		positions.get(i).x+=moves.get(i);
+-        		    if (positions.get(i).x < boundries.get(i)) {
+-        	            positions.get(i).x = boundries.get(i);
+-        	            moves.set(i, (-moves.get(i)));
+-        	        }
+-        	        if (positions.get(i).x> rightBound) {
+-        	            positions.get(i).x = rightBound;
+-        	           moves.set(i, -moves.get(i));
+-        	        }
++                int nextX=enemyX+moves.get(i);
++                if(nextX>=boundries.get(i) && nextX<=rightBound && canMove(nextX,enemyY)) {
++                    positions.get(i).x=nextX;
++                } else {
++                    moves.set(i,-moves.get(i));
++                }
+         	}
+     		}
+-    		
+-    		
+-    	
+-		
++
+     	}
+     
+     private boolean canMove(int x,int y) {
+-    	
+-    	int tileX=x/tileSize;
+-    	int tileY=y/tileSize;
+-    	
+-    	if(tileX<0 || tileX>=map[0].length || tileY<0 || tileY>=map.length) {
+-    		return false;
+-    	}
+-    	String tile=map[tileY][tileX];
+-		return tile.equals("1") || tile.equals("2");
+-    	
+-    	
++        int width=enemy1.getWidth(null), height=enemy1.getHeight(null);
++        if(x<0 || y<0 || x+width>map[0].length*tileSize || y+height>map.length*tileSize) return false;
++        for(int row=y/tileSize;row<=(y+height-1)/tileSize;row++) {
++            for(int col=x/tileSize;col<=(x+width-1)/tileSize;col++) {
++                String tile=map[row][col];
++                if(!tile.equals("1") && !tile.equals("2")) return false;
++            }
++        }
++        return true;
+     }
+-       
+-    public void enemyCor(int x , int y) {
+-  		for(int i=0; i<boundries.size(); i++) {
+-  		//random.nextInt(x);
+-  		//random.nextInt(y);
+-  		
+-  		positions.add(new Point(random.nextInt(x),random.nextInt(y)));	
+-  	}	    
+-  }
+-      
++
++    public Point randomPosition() {
++        ArrayList<Point> available=new ArrayList<>();
++        for(int row=0;row<map.length;row++) {
++            for(int col=0;col<map[row].length;col++) {
++                int x=col*tileSize, y=row*tileSize;
++                if(x<=rightBound && canMove(x,y)) available.add(new Point(x,y));
++            }
++        }
++        if(available.isEmpty()) throw new IllegalStateException("Map has no enemy spawn tiles");
++        return available.get(random.nextInt(available.size()));
++    }
++
++    public void enemyCor(int x,int y) {
++        positions.clear();
++        for(int i=0;i<boundries.size();i++) positions.add(randomPosition());
++    }
++
+     public void render(Graphics2D g2D, int cameraX, int cameraY) {	
+     	for(int i=0; i<positions.size(); i++) {
+     		g2D.drawImage(enemy1, positions.get(i).x-cameraX,positions.get(i).y-cameraY, null);
+     	}	
+     }
+-    
+-    
+-    
++
+     public Rectangle getBounds(int index) {
+     	pos=positions.get(index);
+-    	
+-    	
+-    	
++
+     	return new Rectangle(pos.x,pos.y,enemy1.getWidth(null),enemy1.getHeight(null));
+     }
+-    
+-    
++
+     public int getWorldX() { 
+     	return worldX; 
+     	}
+@@ -173,8 +157,7 @@
+     public void setWorldY(int y) {
+     	this.worldY = y; 
+     	}
+-    
+-    
++
+     public Image getEnemy1() {
+ 		return enemy1;
+ 	}
+@@ -182,5 +165,4 @@
+ 		this.enemy1 = enemy1;
+ 	}
+ 
+-	
+ }
+--- original/src/mainGame/Frame.java
++++ updated/src/mainGame/Frame.java
+@@ -1,23 +1,27 @@
+ package mainGame;
+ 
++import java.awt.Dimension;
++import java.awt.Insets;
++import java.awt.Toolkit;
+ import javax.swing.JFrame;
+ 
+ public class Frame extends JFrame {
+-	
+-	
+-	Panel panel;
+-	Frame(){
+-		this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+-		this.setTitle("PacMan");
+-		this.setSize(getMaximumSize());
+-		this.setLayout(null);
+-	    panel=new Panel();
+-		
+-		
+-		
+-		
+-		this.add(panel);
+-		this.setVisible(true);
+-	}
++    Panel panel;
+ 
++    Frame() {
++        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
++        setTitle("PacMan");
++        panel = new Panel();
++
++        // Fit the window to the desktop, including the menu bar and Dock.
++        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
++        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
++        panel.setPreferredSize(new Dimension(
++                Math.min(1100, screen.width - insets.left - insets.right - 40),
++                Math.min(700, screen.height - insets.top - insets.bottom - 80)));
++        setContentPane(panel);
++        pack();
++        setLocationRelativeTo(null);
++        setVisible(true);
++    }
+ }
+--- original/src/mainGame/Main.java
++++ updated/src/mainGame/Main.java
+@@ -1,11 +1,9 @@
+ package mainGame;
+ 
++import javax.swing.SwingUtilities;
++
+ public class Main {
+-
+-	public static void main(String[] args) {
+-		// TODO Auto-generated method stub
+-
+-		Frame frame=new Frame();
+-	}
+-
++    public static void main(String[] args) {
++        SwingUtilities.invokeLater(Frame::new);
++    }
+ }
+--- original/src/mainGame/Panel.java
++++ updated/src/mainGame/Panel.java
+@@ -9,10 +9,6 @@
+ import java.awt.Rectangle;
+ import java.awt.event.ActionEvent;
+ import java.awt.event.ActionListener;
+-import java.awt.event.KeyEvent;
+-import java.awt.event.KeyListener;
+-import java.awt.event.MouseEvent;
+-import java.awt.event.MouseListener;
+ import java.util.ArrayList;
+ import java.util.Random;
+ 
+@@ -54,8 +50,7 @@
+ 	//Screen W/H
+ 	int screenWidth=1538;
+ 	int screenHeight=900;
+-	
+-	
++
+ 	int mapPixelWidth=0;
+ 	int mapPixelHeight=0;
+ 	
+@@ -64,20 +59,18 @@
+ 	//Reward X/Y coordinates 
+ 	int x;
+ 	int y;
+-	
+-	
++
+ 	//Images
+ 	Image grass,water,tree,bridge,reward,reward2,reward3,reward4;
+ 	String [] numbers;
+ 	ArrayList<Boolean> booleans=new ArrayList<>();
+ 	ArrayList<Image> images=new ArrayList<>();
+-	ArrayList<Point> positions=new ArrayList();
++	ArrayList<Point> positions=new ArrayList<>();
+ 	
+ 	Panel(){
+-		this.setBounds(0,0,screenWidth,screenHeight);
++		this.setLayout(null);
+ 		this.setBackground(new Color(190,149,220));
+-		
+-		
++
+ 		//Initializing the images
+ 		grass=new ImageIcon(Panel.class.getResource("/grassland.png")).getImage();
+ 		water=new ImageIcon(Panel.class.getResource("/sea.png")).getImage();
+@@ -93,15 +86,12 @@
+ 		treeL=false;
+ 		treeU=false;
+ 		treeD=false;
+-		
+-		
++
+ 		images.add(reward);
+ 		images.add(reward2);
+ 		images.add(reward3);
+ 		images.add(reward4);
+-		
+-		
+-		
++
+ 		//Game world's map. Through this map, we can place different pictures based on the numbers.
+ 		map=new String[][] {
+ 				{"1","1","1","1","1","1","1","1","1","0","0","0","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1"},
+@@ -134,10 +124,7 @@
+ 				{"1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","0","0","1","1","1","1","1","1","3","1","1","1","1","1","1","1","3","1","1","1","1","3","1","1","1","1","3","1","1","1","1"},
+ 				{"1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","0","0","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1"}
+ 		};
+-		
+-		
+-		
+-		
++
+ 		//Random
+ 		random=new Random();
+ 		
+@@ -146,13 +133,11 @@
+ 		label.setText("Score: "+score);
+ 		label.setBounds(10, 50, 150, 50);
+ 		label.setForeground(Color.WHITE);
+-		label.setFont(new Font("Times New Roman",Font.BOLD,25));
+-		
+-		
++		label.setFont(new Font(Font.SANS_SERIF,Font.BOLD,20));
++
+ 		player=new Player(500,650);
+ 		enemy=new Enemies(30*tileSize,map,tileSize);
+-		
+-		
++
+ 		timer=new Timer(18,this);
+ 		timer.start();
+ 		
+@@ -162,34 +147,30 @@
+ 		//map world's width and height 
+ 		mapPixelWidth=map[0].length*tileWidth;
+ 		mapPixelHeight=map.length*tileHeight;
+-		
+-	
+-		
++
+ 		//KeyBindings to control the movements(right, left, up, down)
+-		this.getInputMap().put(KeyStroke.getKeyStroke("pressed RIGHT"), "rightPressed");
++		this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("pressed RIGHT"), "rightPressed");
+ 		this.getActionMap().put("rightPressed", new RightPressed());
+-		this.getInputMap().put(KeyStroke.getKeyStroke("released RIGHT"), "rightReleased");
++		this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released RIGHT"), "rightReleased");
+ 		this.getActionMap().put("rightReleased", new RightReleased());
+-		this.getInputMap().put(KeyStroke.getKeyStroke("pressed LEFT"), "leftPressed");
++		this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("pressed LEFT"), "leftPressed");
+ 		this.getActionMap().put("leftPressed", new LeftPressed());
+-		this.getInputMap().put(KeyStroke.getKeyStroke("released LEFT"), "leftReleased");
++		this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released LEFT"), "leftReleased");
+ 		this.getActionMap().put("leftReleased", new LeftReleased());
+-        this.getInputMap().put(KeyStroke.getKeyStroke("pressed UP"), "upPressed");
++        this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("pressed UP"), "upPressed");
+         this.getActionMap().put("upPressed", new UpPressed());
+-        this.getInputMap().put(KeyStroke.getKeyStroke("released UP"), "upReleased");
++        this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released UP"), "upReleased");
+         this.getActionMap().put("upReleased", new UpReleased());
+-        this.getInputMap().put(KeyStroke.getKeyStroke("pressed DOWN"), "downPressed");
++        this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("pressed DOWN"), "downPressed");
+         this.getActionMap().put("downPressed", new DownPressed());
+-        this.getInputMap().put(KeyStroke.getKeyStroke("released DOWN"), "downReleased");
++        this.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released DOWN"), "downReleased");
+         this.getActionMap().put("downReleased", new DownReleased());
+         
+         this.add(label);
+         
+         //For loop for rewards random placement.
+         for(int i=0; i<images.size(); i++) {
+-			 x=random.nextInt(mapPixelWidth);
+-			 y=random.nextInt(mapPixelHeight);
+-			positions.add(new Point(x,y));
++			 positions.add(randomWalkablePosition());
+ 		}
+         //enemyCor is called from enemy class, it has the same FOR LOOP with the same logic.
+         enemy.enemyCor(mapPixelWidth, mapPixelHeight);
+@@ -210,8 +191,7 @@
+ 					int worldY=i*grass.getHeight(null);
+ 					
+ 					int screenX=worldX-cameraX;
+-					int screen=worldX-cameraX;
+-					
++
+ 					int screenY=worldY-cameraY;
+ 					g2D.drawImage(grass, screenX, screenY, null);
+ 				}
+@@ -244,8 +224,7 @@
+ 				else if(map[i][j].equals("2")) {
+ 					int worldX=j*bridge.getWidth(null);
+ 					int worldY=i*bridge.getHeight(null);
+-					
+-					
++
+ 					int screenX=worldX-cameraX;
+ 					int screenY=worldY-cameraY;
+ 					
+@@ -254,21 +233,27 @@
+ 			}
+ 		}
+ 
+-		
+-		
+-		
+-		
+ 		//Placing the reward in map's world. 
+ 		for(Point p:positions) {
+ 			g2D.drawImage(reward, p.x-cameraX, p.y-cameraY, label);
+ 		}
++		int playerScreenX=player.getPlayerX()-cameraX;
++		int playerScreenY=player.getPlayerY()-cameraY;
++
++		player.render(g2D,playerScreenX,playerScreenY);
++		enemy.render(g2D, cameraX, cameraY);
++
++        // A small translucent backing keeps the existing HUD readable.
++        g2D.setColor(new Color(20, 35, 25, 185));
++        g2D.fillRoundRect(6, 6, 156, 88, 10, 10);
++        g2D.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));
+         if(fillRectW>50) {
+         	g2D.setColor(new Color(0, 100, 0));
+         }
+-        else if(fillRectW<50&&fillRectW>15) {
++        else if(fillRectW>15) {
+         	g2D.setColor(new Color(255,255,204));
+         }
+-        else if(fillRectW<15) {
++        else {
+         	g2D.setColor(Color.RED);
+         }
+         
+@@ -278,36 +263,26 @@
+ 		g2D.drawRect(10, 10, 101,31 );
+ 		g2D.drawString(String.valueOf(fillRectW),40,30);
+ 		
+-		g2D.setFont(new Font("New Time Romans",Font.BOLD,16));
++		g2D.setFont(new Font(Font.SANS_SERIF,Font.BOLD,16));
+ 		g2D.setColor(new Color(80, 250, 150));
+ 		
+ 		for(int t=0; t<booleans.size(); t++) {
+-			if(booleans.get(t)==true) {
+-				g2D.drawString("You can't pass through a tree or water", 10, 80);
++			if(booleans.get(t)) {
++				g2D.drawString("You can't pass through a tree or water", 10, 115);
+ 			}
+ 		}
+-		
+-		
+-		int playerScreenX=player.getPlayerX()-cameraX;
+-		int playerScreenY=player.getPlayerY()-cameraY;
+-		
+-		
+-		
+-		player.render(g2D,playerScreenX,playerScreenY);
+-		enemy.render(g2D, cameraX, cameraY);
++
+         
+ 		//Player 
+ 		tilePX=player.getPlayerX()/tileSize;
+ 		tilePY=player.getPlayerY()/tileSize;
+-		
+-	
++
+ 		//repaint();
+ 	}
+ 
+-	
+ 	@Override
+ 	public void actionPerformed(ActionEvent e) {
+-		// TODO Auto-generated method stub
++		
+ 		if(e.getSource()==timer) {
+ 			enemy.enemyMove(player.getPlayerX(),player.getPlayerY());
+ 		}
+@@ -316,101 +291,37 @@
+ 		    rewardRec = new Rectangle(
+ 		        positions.get(i).x,
+ 		        positions.get(i).y,
+-		        images.get(i).getWidth(null),
+-		        images.get(i).getHeight(null)
++		        reward.getWidth(null),
++		        reward.getHeight(null)
+ 		    );
+ 
+ 		    if (player.getBounds().intersects(rewardRec)) {
+ 
+-		        boolean validTile = false;
+-		        int tileX = 0;
+-		        int tileY = 0;
+-
+-		        while (!validTile) {
+-		            tileX = random.nextInt(map[0].length); // columns
+-		            tileY = random.nextInt(map.length);    // rows
+-
+-		            String tile = map[tileY][tileX]; // IMPORTANT: y first, x second
+-
+-		            // allow ONLY grass ("1") or bridge ("2")
+-		            if (!tile.equals("0") && !tile.equals("3")) {
+-		                validTile = true;
+-		            }
+-		        }
+-
+-		        // convert tile position → pixel position
+-		        positions.get(i).x = tileX * tileSize;
+-		        positions.get(i).y = tileY * tileSize;
++		        positions.set(i, randomWalkablePosition());
+ 
+ 		        score++;
+ 		        label.setText("Score: " + score);
+ 		        enemy.moves.add(random.nextInt(3,9));
+ 				enemy.boundries.add(random.nextInt(0,4));
+-				enemy.positions.add(new Point(cameraX,cameraY));
++				enemy.positions.add(enemy.randomPosition());
+ 		    }
+ 		}
+ 
+-				
+-				
+-				/*positions.get(i).x=random.nextInt(10,1600);
+-				positions.get(i).y=random.nextInt(10,900);
+-				score+=1;
+-				label.setText("Score: "+score);*/
+-				
+-			
+-		
+-			
+-		
+-					
+-		       
+-		        
+ 		        //Player
+-		        		if(treeR==false) {
+-				        	if(tilePX - 1 >= 0&&map[tilePY][tilePX-1].equals("3")||tilePX - 1 >= 0&&map[tilePY][tilePX-1].equals("0")) {
+-								treeR=true;
+-							}	
+-				        }
+-						if(tilePX - 1 >= 0&&!map[tilePY][tilePX-1].equals("3")&&tilePX - 1 >= 0&&!map[tilePY][tilePX-1].equals("0")) {
+-							treeR=false;
+-						}
+-						
+-						if(treeL==false) {
+-					        	if(tilePX + 1 >= 0&&map[tilePY][tilePX+1].equals("3")||tilePX + 1 >= 0&&map[tilePY][tilePX+1].equals("0")) {
+-									treeL=true;
+-								}	
+-					        }
+-					    if(tilePX + 1 >= 0&&!map[tilePY][tilePX+1].equals("3")&&tilePX + 1 >= 0&&!map[tilePY][tilePX+1].equals("0")) {
+-							treeL=false;
+-							}
+-					    
+-					    if(treeU==false) {
+-				        	if(tilePY - 1 >= 0&&map[tilePY-1][tilePX].equals("3")||tilePY - 1 >= 0&&map[tilePY-1][tilePX].equals("0")) {
+-								treeU=true;
+-							}	
+-				        }
+-						if(tilePY - 1 >= 0&&!map[tilePY-1][tilePX].equals("3")&&tilePY - 1 >= 0&&!map[tilePY-1][tilePX].equals("0")) {
+-							treeU=false;
+-						}
+-						
+-						if(treeD==false) {
+-					        	if(tilePY + 1 >= 0&&map[tilePY+1][tilePX].equals("3")||tilePY + 1 >= 0&&map[tilePY+1][tilePX].equals("0")) {
+-									treeD=true;
+-								}	
+-					        }
+-						if(tilePY + 1 >= 0&&!map[tilePY+1][tilePX].equals("3")&&tilePY + 1 >= 0&&!map[tilePY+1][tilePX].equals("0")) {
+-							treeD=false;
+-							}
+-		       
+-		        
+-					
+-				booleans=new ArrayList();
++        // Calculate the tile here, rather than depending on the last repaint.
++        tilePX=player.getPlayerX()/tileSize;
++        tilePY=player.getPlayerY()/tileSize;
++        treeR=!isWalkableTile(tilePX-1,tilePY);
++        treeL=!isWalkableTile(tilePX+1,tilePY);
++        treeU=!isWalkableTile(tilePX,tilePY-1);
++        treeD=!isWalkableTile(tilePX,tilePY+1);
++
++				booleans=new ArrayList<>();
+ 				booleans.add(treeR);
+ 				booleans.add(treeL);
+ 				booleans.add(treeU);
+ 				booleans.add(treeD);
+-					
+-					
+-		
++
+ 	 //Player intersection with enemy and reward
+ 	 for(int k=0; k<enemy.positions.size(); k++) {
+ 		 if(player.getBounds().intersects(enemy.getBounds(k))) {
+@@ -418,47 +329,36 @@
+ 		 }		
+ 		 
+ 	 }		
+-	 
+-	 
+-		
+-		
++
+ 		//Checking if the health bar is 0;
+-		if(fillRectW==0) {
++		if(fillRectW<=0) {
+ 			timer.stop();
+ 			int answer=JOptionPane.showConfirmDialog(null, "Would you like to play again?", "Game over", JOptionPane.YES_NO_OPTION);
+ 			
+-			if(answer==JOptionPane.NO_OPTION) {
+-				timer.stop();
+-				System.exit(0);
+-			}
+-			else if(answer==JOptionPane.YES_OPTION) {
+-				timer.start();
+-				player.setPlayerX(500);
+-				player.setPlayerY(600);
+-				fillRectW=100;
+-			}
++            if(answer!=JOptionPane.YES_OPTION) {
++                System.exit(0);
++            } else {
++                player.setPlayerX(500);
++                player.setPlayerY(650);
++                fillRectW=100;
++                score=0;
++                label.setText("Score: 0");
++                enemy=new Enemies(30*tileSize,map,tileSize);
++                enemy.enemyCor(mapPixelWidth,mapPixelHeight);
++                for(int i=0;i<positions.size();i++) positions.set(i,randomWalkablePosition());
++                timer.start();
++            }
+ 		}
+ 		
+ 		//Assigning the values to camera coordinates
+-		cameraX=player.getPlayerX()-screenWidth/2;
+-		cameraY=player.getPlayerY()-screenHeight/2;
+-		
+-		if(cameraX<0) {
+-			cameraX=0;
+-		}
+-		if(cameraY<0) {
+-			cameraY=0;
+-		}
+-		
+-		if(cameraX>mapPixelWidth-screenWidth) {
+-			cameraX=mapPixelWidth-screenWidth;
+-		}
+-		if(cameraY>mapPixelHeight-screenHeight) {
+-			cameraY=mapPixelHeight-screenHeight;
+-		}
+-		
+-		
+-		//making some rules so that the player doesn't get out of the Map's world.
++        screenWidth=getWidth();
++        screenHeight=getHeight();
++        cameraX=Math.max(0,Math.min(player.getPlayerX()-screenWidth/2,
++                Math.max(0,mapPixelWidth-screenWidth)));
++        cameraY=Math.max(0,Math.min(player.getPlayerY()-screenHeight/2,
++                Math.max(0,mapPixelHeight-screenHeight)));
++
++        //making some rules so that the player doesn't get out of the Map's world.
+ 		if(player.getPlayerX()<0) {
+ 			player.setPlayerX(0);
+ 		}
+@@ -472,35 +372,39 @@
+ 		if(player.getPlayerY()>mapPixelHeight-player.playerImg.getHeight(null)) {
+ 			player.setPlayerY(mapPixelHeight-player.playerImg.getHeight(null));
+ 		}
+-		
+-		
+-		
++
+ 		repaint();	
+ 	}
+ 	
+-	public boolean canMove(int futureX ,int futureY) {
+-		
+-		int tileX=futureX/tileSize;
+-		int tileY=futureY/tileSize;
+-		
+-		if(tileX<0 || tileX>=map[0].length-1 || tileY<0 || tileY>=map.length-1) {
+-			return false;
+-		}
+-		
+-		String tile=map[tileY][tileX];
+-		    return tile.equals("1") || tile.equals("2");
+-	}
+-	
+-	
+-	
+-	
+-	
+-	
++    // Keep the original tile-step controls; check bounds before indexing the map.
++    public boolean canMove(int futureX,int futureY) {
++        if(futureX<0 || futureY<0
++                || futureX>mapPixelWidth-player.playerImg.getWidth(null)
++                || futureY>mapPixelHeight-player.playerImg.getHeight(null)) return false;
++        return isWalkableTile(futureX/tileSize,futureY/tileSize);
++    }
++
++    private boolean isWalkableTile(int tileX,int tileY) {
++        if(tileX<0 || tileY<0 || tileX>=map[0].length || tileY>=map.length) return false;
++        return map[tileY][tileX].equals("1") || map[tileY][tileX].equals("2");
++    }
++
++    private Point randomWalkablePosition() {
++        ArrayList<Point> available=new ArrayList<>();
++        for(int row=0;row<map.length;row++) {
++            for(int col=0;col<map[row].length;col++) {
++                if(isWalkableTile(col,row)) available.add(new Point(col*tileSize,row*tileSize));
++            }
++        }
++        if(available.isEmpty()) throw new IllegalStateException("Map has no walkable tiles");
++        return available.get(random.nextInt(available.size()));
++    }
++
+ 	//KeyBindings' abstract methods for movements(right, left, up, down)
+ 	public class RightPressed extends AbstractAction{
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			int futureX=player.getPlayerX()+tileSize;
+ 			
+ 			if(canMove(futureX,player.getPlayerY())) {
+@@ -515,20 +419,18 @@
+ 	public class RightReleased extends AbstractAction{
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			player.setDirection(false);	
+ 			repaint();
+ 			
+ 		}
+ 	}
+-	
+-	
++
+ 	public class LeftPressed extends AbstractAction{
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
+-			
++
+ 			int futureX=player.getPlayerX()-tileSize;
+ 			
+ 			if(canMove(futureX,player.getPlayerY())) {
+@@ -543,18 +445,17 @@
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			player.setDirection(false);
+ 			repaint();
+ 		}	
+ 	}
+-	
+-	
++
+ 	public class UpPressed extends AbstractAction{
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+             int futureY=player.getPlayerY()-tileSize;
+ 			
+ 			if(canMove(player.getPlayerX(),futureY)){
+@@ -568,18 +469,17 @@
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			player.setDirection(false);
+ 			repaint();
+ 		}	
+ 	}
+ 
+-	
+ 	public class DownPressed extends AbstractAction{
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			int futureY=player.getPlayerY()+tileSize;
+ 			
+ 			if(canMove(player.getPlayerX(),futureY)){
+@@ -593,7 +493,7 @@
+ 
+ 		@Override
+ 		public void actionPerformed(ActionEvent e) {
+-			// TODO Auto-generated method stub
++			
+ 			player.setDirection(false);
+ 			repaint();
+ 		}
