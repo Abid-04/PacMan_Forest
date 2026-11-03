@@ -18,9 +18,15 @@ The project demonstrates object-oriented programming, enemy AI, collision detect
 - **Character animations:** The player's appearance changes based on movement.
 - **Game Over system:** Restart gameplay after losing all health.
 
+
 ## Screenshots
 
-*Screenshots will be added here.*
+### Forest Exploration
+![PacMan Forest Gameplay](screenshots/gameplay_01.png)
+
+### Game Over
+![PacMan Forest Game Over](screenshots/gameplay_02.png)
+
 
 ## Technologies Used
 
