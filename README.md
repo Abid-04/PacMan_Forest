@@ -22,10 +22,10 @@ The project demonstrates object-oriented programming, enemy AI, collision detect
 ## Screenshots
 
 ### Forest Exploration
-![PacMan Forest Gameplay](screenshots/gameplay_01.png)
+![PacMan Forest Gameplay](screenshots_/gameplay_01.png)
 
 ### Game Over
-![PacMan Forest Game Over](screenshots/gameplay_02.png)
+![PacMan Forest Game Over](screenshots_/gameplay_02.png)
 
 
 ## Technologies Used
